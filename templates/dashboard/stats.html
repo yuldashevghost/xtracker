@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistics - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Performance & Statistics</h1>
+    </div>
+
+    <div class="stats-grid">
+        <!-- Today's Stats -->
+        <div class="stat-card">
+            <h3 class="stat-title">Today</h3>
+            <div class="stat-content">
+                <div class="stat-number">{{ today_completed }}/{{ today_total }}</div>
+                <div class="stat-percentage">{{ today_percentage }}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ today_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week's Stats -->
+        <div class="stat-card">
+            <h3 class="stat-title">This Week</h3>
+            <div class="stat-content">
+                <div class="stat-number">{{ week_completed }}/{{ week_total }}</div>
+                <div class="stat-percentage">{{ week_percentage }}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ week_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month's Stats -->
+        <div class="stat-card">
+            <h3 class="stat-title">This Month</h3>
+            <div class="stat-content">
+                <div class="stat-number">{{ month_completed }}/{{ month_total }}</div>
+                <div class="stat-percentage">{{ month_percentage }}%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ month_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Progress Chart -->
+    <div class="stats-section">
+        <h2 class="section-title">Weekly Progress</h2>
+        <div class="weekly-chart">
+            {% for day in weekly_progress %}
+            <div class="chart-day">
+                <div class="chart-bar-container">
+                    <div class="chart-bar" style="height: {{ day.percentage }}%"></div>
+                </div>
+                <div class="chart-label">{{ day.date|date:"D" }}</div>
+                <div class="chart-value">{{ day.completed }}/{{ day.total }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Detailed Stats -->
+    <div class="stats-section">
+        <h2 class="section-title">Detailed Statistics</h2>
+        <div class="stats-table">
+            <div class="stats-row">
+                <span class="stats-label">Total Habits:</span>
+                <span class="stats-value">{{ week_total }}</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Completed Today:</span>
+                <span class="stats-value">{{ today_completed }}</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Completed This Week:</span>
+                <span class="stats-value">{{ week_completed }}</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Completed This Month:</span>
+                <span class="stats-value">{{ month_completed }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

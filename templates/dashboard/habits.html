@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Habits - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Habits</h1>
+        <button class="btn btn-primary" onclick="showAddHabitForm()">+ Add Habit</button>
+    </div>
+
+    <!-- Add Habit Form -->
+    <div id="addHabitForm" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="hideAddHabitForm()">&times;</span>
+            <h2>Add New Habit</h2>
+            <form method="post" action="{% url 'add_habit' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="title">Habit Title</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="time">Time (HH:MM)</label>
+                    <input type="time" id="time" name="time" value="07:00" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Habit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Habit Form -->
+    <div id="editHabitForm" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="hideEditHabitForm()">&times;</span>
+            <h2>Edit Habit</h2>
+            <form id="editForm" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="edit_title">Habit Title</label>
+                    <input type="text" id="edit_title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_time">Time (HH:MM)</label>
+                    <input type="time" id="edit_time" name="time" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Update Habit</button>
+            </form>
+        </div>
+    </div>
+
+    {% if habits %}
+        <div class="habits-list">
+            {% for habit in habits %}
+            <div class="habit-item">
+                <div class="habit-info">
+                    <h3 class="habit-title">{{ habit.title }}</h3>
+                    <span class="habit-time">{{ habit.time|time:"H:i" }}</span>
+                </div>
+                <div class="habit-actions">
+                    <button class="btn btn-secondary" onclick="showEditHabitForm({{ habit.id }}, '{{ habit.title }}', '{{ habit.time|time:"H:i" }}')">
+                        Edit
+                    </button>
+                    <a href="{% url 'delete_habit' habit.id %}" class="btn btn-danger" 
+                       onclick="return confirm('Are you sure you want to delete this habit?')">
+                        Delete
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No habits yet. <button class="btn-link" onclick="showAddHabitForm()">Add your first habit</button> to get started!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddHabitForm() {
+    document.getElementById('addHabitForm').style.display = 'block';
+}
+
+function hideAddHabitForm() {
+    document.getElementById('addHabitForm').style.display = 'none';
+}
+
+function showEditHabitForm(habitId, title, time) {
+    document.getElementById('edit_title').value = title;
+    document.getElementById('edit_time').value = time;
+    document.getElementById('editForm').action = `/habits/${habitId}/edit/`;
+    document.getElementById('editHabitForm').style.display = 'block';
+}
+
+function hideEditHabitForm() {
+    document.getElementById('editHabitForm').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const addModal = document.getElementById('addHabitForm');
+    const editModal = document.getElementById('editHabitForm');
+    if (event.target == addModal) {
+        addModal.style.display = 'none';
+    }
+    if (event.target == editModal) {
+        editModal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+

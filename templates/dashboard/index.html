@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="showGenerateTasksForm()">+ Generate Tasks</button>
+            <a href="{% url 'habits' %}" class="btn btn-primary">+ Add Habit</a>
+        </div>
+    </div>
+
+    <!-- Generate Tasks Modal -->
+    <div id="generateTasksModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="hideGenerateTasksForm()">&times;</span>
+            <h2>Generate Tasks</h2>
+            <p class="modal-description">Generate daily tasks for a specific date based on your habits.</p>
+            <form method="post" action="{% url 'generate_tasks' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="task_date">Select Date</label>
+                    <input type="date" id="task_date" name="date" value="{{ today|date:'Y-m-d' }}" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-block">Generate Tasks</button>
+                    <button type="button" class="btn btn-secondary btn-block" onclick="generateForToday()">Generate for Today</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="tasks-section">
+        <h2 class="section-title">Today - {{ today|date:"F d, Y" }}</h2>
+        
+        {% if today_tasks %}
+            <div class="tasks-list">
+                {% for task in today_tasks %}
+                <div class="task-item {% if task.is_done %}task-done{% endif %}" data-task-id="{{ task.id }}">
+                    <input type="checkbox" class="task-checkbox" {% if task.is_done %}checked{% endif %} 
+                           onchange="toggleTask({{ task.id }})">
+                    <span class="task-title">{{ task.habit.title }}</span>
+                    <span class="task-time">{{ task.habit.time|time:"H:i" }}</span>
+                    <span class="task-date">{{ task.date|date:"M d" }}</span>
+                    <button class="btn-icon edit-btn" onclick="editTask({{ task.id }})" title="Edit">
+                        ✏️
+                    </button>
+                    <button class="btn-icon delete-btn" onclick="deleteTask({{ task.id }})" title="Delete">
+                        🗑️
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No tasks for today. 
+                    <button class="btn-link" onclick="showGenerateTasksForm()">Generate tasks for today</button> 
+                    or <a href="{% url 'habits' %}">add a habit</a> first!
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if tasks_by_date %}
+    <div class="tasks-section">
+        <h2 class="section-title">Recent Tasks</h2>
+        {% for date_str, tasks in tasks_by_date.items %}
+            {% if date_str != today|date:"Y-m-d" %}
+            <div class="date-group">
+                <h3 class="date-title">{{ tasks.0.date|date:"F d, Y" }}</h3>
+                <div class="tasks-list">
+                    {% for task in tasks %}
+                    <div class="task-item {% if task.is_done %}task-done{% endif %}" data-task-id="{{ task.id }}">
+                        <input type="checkbox" class="task-checkbox" {% if task.is_done %}checked{% endif %} 
+                               onchange="toggleTask({{ task.id }})">
+                        <span class="task-title">{{ task.habit.title }}</span>
+                        <span class="task-time">{{ task.habit.time|time:"H:i" }}</span>
+                        <span class="task-date">{{ task.date|date:"M d" }}</span>
+                        <button class="btn-icon edit-btn" onclick="editTask({{ task.id }})" title="Edit">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete-btn" onclick="deleteTask({{ task.id }})" title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleTask(taskId) {
+    fetch(`/tasks/${taskId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const taskItem = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (data.is_done) {
+            taskItem.classList.add('task-done');
+        } else {
+            taskItem.classList.remove('task-done');
+        }
+    });
+}
+
+function editTask(taskId) {
+    window.location.href = `/tasks/${taskId}/edit/`;
+}
+
+function deleteTask(taskId) {
+    if (confirm('Are you sure you want to delete this task?')) {
+        window.location.href = `/tasks/${taskId}/delete/`;
+    }
+}
+
+function showGenerateTasksForm() {
+    document.getElementById('generateTasksModal').style.display = 'block';
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('task_date').value = today;
+}
+
+function hideGenerateTasksForm() {
+    document.getElementById('generateTasksModal').style.display = 'none';
+}
+
+function generateForToday() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('task_date').value = today;
+    document.querySelector('#generateTasksModal form').submit();
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('generateTasksModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+
